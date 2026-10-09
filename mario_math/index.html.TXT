@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Math World - სუპერ მათემატიკა</title>
+  <style>
+    :root {
+      --bg-sky: #5c94fc;
+      --mario-red: #e52521;
+      --mario-yellow: #fbd000;
+      --mario-green: #43b047;
+      --card-bg: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Press Start 2P', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-sky);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .game-container {
+      width: 90%;
+      max-width: 650px;
+      background: var(--card-bg);
+      border: 6px solid #000;
+      border-radius: 16px;
+      box-shadow: 0 10px 0 #000;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    /* Top Bar Header */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      background: #f0f0f0;
+      padding: 10px 15px;
+      border: 3px solid #000;
+      border-radius: 8px;
+    }
+
+    .lang-select {
+      padding: 5px 10px;
+      font-size: 14px;
+      font-weight: bold;
+      border: 2px solid #000;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+      font-weight: bold;
+      font-size: 16px;
+      background: #fff3c4;
+      padding: 10px;
+      border: 3px solid #000;
+      border-radius: 8px;
+    }
+
+    /* Question Card */
+    .question-card {
+      background: #e1f5fe;
+      border: 4px solid #0288d1;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 20px;
+    }
+
+    .question-text {
+      font-size: 32px;
+      font-weight: bold;
+      color: #01579b;
+      margin-bottom: 20px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .btn-option {
+      background: var(--mario-yellow);
+      border: 4px solid #000;
+      border-radius: 8px;
+      padding: 15px;
+      font-size: 22px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #000;
+      transition: transform 0.1s, background-color 0.2s;
+    }
+
+    .btn-option:active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #000;
+    }
+
+    /* Star Power Effects */
+    .star-mode {
+      animation: rainbow 0.5s infinite;
+      border-color: #fff !important;
+    }
+
+    @keyframes rainbow {
+      0% { background-color: #ff2a2a; }
+      25% { background-color: #ffaa00; }
+      50% { background-color: #2aff2a; }
+      75% { background-color: #00aaff; }
+      100% { background-color: #cc00ff; }
+    }
+
+    /* Modal / End Game Screen */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .modal-content {
+      background: #fff;
+      border: 6px solid #000;
+      border-radius: 16px;
+      padding: 30px;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      animation: popIn 0.3s ease-out;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.5); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-title {
+      font-size: 24px;
+      color: var(--mario-red);
+      margin-bottom: 15px;
+    }
+
+    .modal-icon {
+      font-size: 60px;
+      margin: 15px 0;
+    }
+
+    .btn-restart {
+      background: var(--mario-green);
+      color: #fff;
+      border: 3px solid #000;
+      padding: 12px 24px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #000;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container" id="game-app">
+    <!-- Header with Language Selector -->
+    <div class="header-bar">
+      <span id="txt-title" style="font-weight: bold;">🎮 SUPER MATH</span>
+      <select id="lang-select" class="lang-select" onchange="changeLanguage(this.value)">
+        <option value="ka">🇬🇪 ქართული</option>
+        <option value="el">🇬🇷 Ελληνικά</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="zh">🇨🇳 简体中文</option>
+      </select>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div>⏱️ <span id="txt-time-label">დრო</span>: <span id="timer">15:00</span></div>
+      <div>⭐ <span id="txt-score-label">ქულა</span>: <span id="score">0</span></div>
+      <div>🔥 <span id="txt-streak-label">სერია</span>: <span id="streak">0</span></div>
+    </div>
+
+    <!-- Question Box -->
+    <div class="question-card" id="q-card">
+      <div class="question-text" id="question">2 + 2 = ?</div>
+      <div class="options-grid" id="options">
+        <!-- Buttons injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Final End Screen Modal -->
+  <div class="modal" id="end-modal">
+    <div class="modal-content">
+      <div class="modal-title" id="modal-title">შედეგი</div>
+      <div class="modal-icon" id="modal-icon">🏆</div>
+      <h2 id="modal-percentage">100%</h2>
+      <p id="modal-message">შეტყობინება ბავშვს</p>
+      <button class="btn-restart" onclick="restartGame()" id="btn-restart">ხელახლა დაწყება 🔄</button>
+    </div>
+  </div>
+
+  <script>
+    // 🌐 Multi-language Translations
+    const translations = {
+      ka: {
+        title: "სუპერ მათემატიკა",
+        time: "დრო",
+        score: "ქულა",
+        streak: "სერია",
+        restart: "ხელახლა დაწყება 🔄",
+        win100: "🏆 100% - თამაში დახურულია! შენ მათემატიკის ჩემპიონი ხარ!",
+        win97: "👑 პრინცესა გადარჩენილია! შენ ნამდვილი გმირი ხარ!",
+        win90: "🔥 დრაკონი ლავაში ჩავარდა! ცოტაც და პრინცესას იხსნიდი!",
+        win80: "🏰 დროშა ჩამოწეულია! შენ შეხვედი სასახლეში!",
+        win70: "🟢 ტუნელში შესვლა! შენ მეტი შეგიძლია!",
+        tryAgain: "🍄 არ დანებდე, სცადე თავიდან!"
+      },
+      el: {
+        title: "Super Μαθηματικά",
+        time: "Χρόνος",
+        score: "Πόντοι",
+        streak: "Σερί",
+        restart: "Επανεκκίνηση 🔄",
+        win100: "🏆 100% - Το παιχνίδι ολοκληρώθηκε! Είσαι ο πρωταθλητής!",
+        win97: "👑 Η Πριγκίπισσα σώθηκε! Είσαι ένας πραγματικός ήρωας!",
+        win90: "🔥 Ο Δράκος έπεσε στη λάβα!",
+        win80: "🏰 Η σημαία κατέβηκε! Μπήκες στο κάστρο!",
+        win70: "🟢 Είσοδος στον σωλήνα! Μπορείς και καλύτερα!",
+        tryAgain: "🍄 Μην τα παρατάς, προσπάθησε ξανά!"
+      },
+      ru: {
+        title: "Супер Математика",
+        time: "Время",
+        score: "Очки",
+        streak: "Серия",
+        restart: "Начать заново 🔄",
+        win100: "🏆 100% - Игра пройдена! Ты чемпион математики!",
+        win97: "👑 Принцесса спасена! Ты настоящий герой!",
+        win90: "🔥 Дракон упал в лаву! Еще немного и спас бы принцессу!",
+        win80: "🏰 Флаг спущен! Ты вошел в замок!",
+        win70: "🟢 Вход в трубу! Ты можешь еще лучше!",
+        tryAgain: "🍄 Не сдавайся, попробуй снова!"
+      },
+      en: {
+        title: "Super Math",
+        time: "Time",
+        score: "Score",
+        streak: "Streak",
+        restart: "Restart Game 🔄",
+        win100: "🏆 100% - Game Cleared! You are the Math Champion!",
+        win97: "👑 Princess Rescued! You are a true hero!",
+        win90: "🔥 Bowser fell into the lava! So close to saving the Princess!",
+        win80: "🏰 Flag lowered! You entered the castle!",
+        win70: "🟢 Pipe Entered! You can do even better!",
+        tryAgain: "🍄 Don't give up, try again!"
+      },
+      es: {
+        title: "Súper Matemáticas",
+        time: "Tiempo",
+        score: "Puntos",
+        streak: "Racha",
+        restart: "Reiniciar 🔄",
+        win100: "🏆 100% - ¡Juego Completado! ¡Eres el Campeón!",
+        win97: "👑 ¡Princesa Rescatada! ¡Eres un verdadero héroe!",
+        win90: "🔥 ¡El Dragón cayó a la lava!",
+        win80: "🏰 ¡Bandera bajada! ¡Entraste al castillo!",
+        win70: "🟢 ¡Entraste a la tubería! ¡Puedes hacerlo mejor!",
+        tryAgain: "🍄 ¡No te rindas, inténtalo de nuevo!"
+      },
+      fr: {
+        title: "Super Mathématiques",
+        time: "Temps",
+        score: "Score",
+        streak: "Série",
+        restart: "Recommencer 🔄",
+        win100: "🏆 100% - Jeu Terminé! Vous êtes le Champion!",
+        win97: "👑 Princesse Sauvée! Vous êtes un vrai héros!",
+        win90: "🔥 Le Dragon est tombé dans la lave!",
+        win80: "🏰 Drapeau baissé! Vous êtes entré dans le château!",
+        win70: "🟢 Tuyau Entré! Vous pouvez faire encore mieux!",
+        tryAgain: "🍄 N'abandonnez pas, réessayez!"
+      },
+      de: {
+        title: "Super Mathematik",
+        time: "Zeit",
+        score: "Punkte",
+        streak: "Serie",
+        restart: "Neustart 🔄",
+        win100: "🏆 100% - Spiel Gewonnen! Du bist der Champion!",
+        win97: "👑 Prinzessin Gerettet! Du bist ein echter Held!",
+        win90: "🔥 Der Drache ist in die Lava gefallen!",
+        win80: "🏰 Fahne gesenkt! Du bist im Schloss!",
+        win70: "🟢 Röhre Betreten! Du kannst noch mehr!",
+        tryAgain: "🍄 Nicht aufgeben, versuche es nochmal!"
+      },
+      zh: {
+        title: "超级数学",
+        time: "时间",
+        score: "得分",
+        streak: "连胜",
+        restart: "重新开始 🔄",
+        win100: "🏆 100% - 通关！你是数学冠军！",
+        win97: "👑 拯救公主！你是真正的英雄！",
+        win90: "🔥 恶龙掉入熔岩！",
+        win80: "🏰 降下旗帜！进入城堡！",
+        win70: "🟢 进入管道！你可以做得更好！",
+        tryAgain: "🍄 不要放弃，再试一次！"
+      }
+    };
+
+    // Game Variables
+    let currentLang = "ka";
+    let score = 0;
+    let streak = 0;
+    let totalQuestions = 0;
+    let correctAnswers = 0;
+    let timeLeft = 15 * 60; // 15 Minutes Session
+    let timerInterval = null;
+    let currentCorrectAnswer = 0;
+
+    // Initialize Game
+    function initGame() {
+      score = 0;
+      streak = 0;
+      totalQuestions = 0;
+      correctAnswers = 0;
+      timeLeft = 15 * 60;
+      
+      document.getElementById('score').innerText = score;
+      document.getElementById('streak').innerText = streak;
+      
+      startTimer();
+      nextQuestion();
+    }
+
+    // Language Selector
+    function changeLanguage(lang) {
+      currentLang = lang;
+      const t = translations[lang];
+      document.getElementById('txt-title').innerText = "🎮 " + t.title;
+      document.getElementById('txt-time-label').innerText = t.time;
+      document.getElementById('txt-score-label').innerText = t.score;
+      document.getElementById('txt-streak-label').innerText = t.streak;
+      document.getElementById('btn-restart').innerText = t.restart;
+    }
+
+    // Timer Logic
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        let mins = Math.floor(timeLeft / 60);
+        let secs = timeLeft % 60;
+        document.getElementById('timer').innerText = 
+          `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          endGame();
+        }
+      }, 1000);
+    }
+
+    // Generate Random Question
+    function nextQuestion() {
+      const num1 = Math.floor(Math.random() * 20) + 1;
+      const num2 = Math.floor(Math.random() * 20) + 1;
+      currentCorrectAnswer = num1 + num2;
+
+      document.getElementById('question').innerText = `${num1} + ${num2} = ?`;
+
+      let options = [currentCorrectAnswer];
+      while (options.length < 4) {
+        let wrong = currentCorrectAnswer + (Math.floor(Math.random() * 10) - 5);
+        if (wrong > 0 && !options.includes(wrong)) {
+          options.push(wrong);
+        }
+      }
+      options.sort(() => Math.random() - 0.5);
+
+      const optionsGrid = document.getElementById('options');
+      optionsGrid.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-option';
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(opt);
+        optionsGrid.appendChild(btn);
+      });
+    }
+
+    // Answer Checking & Star Power Logic
+    function checkAnswer(selected) {
+      totalQuestions++;
+      const qCard = document.getElementById('q-card');
+
+      if (selected === currentCorrectAnswer) {
+        correctAnswers++;
+        score += 10;
+        streak++;
+        
+        // Star Power Activate on 3 Streak!
+        if (streak >= 3) {
+          qCard.classList.add('star-mode');
+        }
+      } else {
+        streak = 0;
+        qCard.classList.remove('star-mode');
+      }
+
+      document.getElementById('score').innerText = score;
+      document.getElementById('streak').innerText = streak;
+
+      // End automatically after 10 questions for demo (or timer finish)
+      if (totalQuestions >= 10) {
+        endGame();
+      } else {
+        nextQuestion();
+      }
+    }
+
+    // End Game Modal Logic (% based)
+    function endGame() {
+      clearInterval(timerInterval);
+      const percentage = Math.round((correctAnswers / totalQuestions) * 100);
+      const t = translations[currentLang];
+
+      let title = "";
+      let icon = "";
+      let message = "";
+
+      if (percentage === 100) {
+        title = "🏆 ABSOLUTE CHAMPION!";
+        icon = "🌟🎆👑";
+        message = t.win100;
+      } else if (percentage >= 97) {
+        title = "👑 PRINCESS RESCUED!";
+        icon = "👸✨💖";
+        message = t.win97;
+      } else if (percentage >= 90) {
+        title = "🔥 DRAGON DEFEATED!";
+        icon = "🦖🌋🔥";
+        message = t.win90;
+      } else if (percentage >= 80) {
+        title = "🏰 CASTLE CLEARED!";
+        icon = "🚩🏰🎉";
+        message = t.win80;
+      } else if (percentage >= 70) {
+        title = "🟢 PIPE ENTERED!";
+        icon = "🟢🍄⭐";
+        message = t.win70;
+      } else {
+        title = "🍄 TRY AGAIN!";
+        icon = "💔🍄💪";
+        message = t.tryAgain;
+      }
+
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-icon').innerText = icon;
+      document.getElementById('modal-percentage').innerText = percentage + "%";
+      document.getElementById('modal-message').innerText = message;
+      document.getElementById('end-modal').style.display = 'flex';
+    }
+
+    function restartGame() {
+      document.getElementById('end-modal').style.display = 'none';
+      document.getElementById('q-card').classList.remove('star-mode');
+      initGame();
+    }
+
+    // Run Game on Load
+    window.onload = initGame;
+  </script>
+</body>
+</html>
+// 8-ბიტიანი ხმის გენერატორი (Web Audio API)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playRetroSound(freq, type, duration) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type; // 'square', 'sawtooth', 'triangle'
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+// 🔊 სწორი პასუხის ხმა (Mario Coin Sound)
+function playCoinSound() {
+  playRetroSound(987.77, 'square', 0.08); // B5
+  setTimeout(() => playRetroSound(1318.51, 'square', 0.25), 80); // E6
+}
+
+// ❌ შეცდომის ხმა
+function playWrongSound() {
+  playRetroSound(150, 'sawtooth', 0.2);
+}
+// აუდიო ობიექტების შექმნა
+const sounds = {
+  bgm: new Audio('bgm_overworld.mp3'),      // ფონური მუსიკა
+  star: new Audio('star_power.mp3'),         // ვარსკვლავის მუსიკა
+  coin: new Audio('coin.mp3'),               // მონეტის/სწორი პასუხის ხმა
+  gameOver: new Audio('game_over.mp3'),      // წაგების ხმა
+  victory: new Audio('world_clear.mp3')      // გამარჯვების მუსიკა
+};
+
+// მუსიკის განმეორებით დაკვრა (Loop)
+sounds.bgm.loop = true;
+sounds.star.loop = true;
+
+// 🔊 ფუნქცია მუსიკის ჩასართავად
+function playMusic(trackName) {
+  // ყველა მუსიკის გაჩერება
+  Object.values(sounds).forEach(s => { s.pause(); s.currentTime = 0; });
+  
+  // არჩეული ტრეკის ჩართვა
+  if (sounds[trackName]) {
+    sounds[trackName].play().catch(e => console.log("User interaction required to play audio"));
+  }
+}
+document.getElementById('start-btn').addEventListener('click', () => {
+  sounds.bgm.play();
+});
